@@ -1,0 +1,322 @@
+type Query {
+    # User queries
+    userById(id: ID!): User
+    userByEmail(email: String!): User
+    allUsers: [User!]!
+
+    # Course queries
+    courseById(id: ID!): Course
+    coursesByCreator(creatorId: ID!): [Course!]!
+    publishedCourses(page: Int, size: Int): CourseConnection!
+    searchCourses(keyword: String, page: Int, size: Int): CourseConnection!
+    coursesByPriceRange(maxPrice: Int!, page: Int, size: Int): CourseConnection!
+    purchasedCoursesByUser(userId: ID!): [Course!]!
+
+    # Lesson queries
+    lessonById(id: ID!): Lesson
+    lessonsByCourse(courseId: ID!): [Lesson!]!
+
+    # Blog queries
+    blogById(id: ID!): Blog
+    blogBySlug(slug: String!): Blog
+    publishedBlogs(page: Int, size: Int): BlogConnection!
+    blogsByAuthor(authorId: ID!): [Blog!]!
+    searchBlogs(keyword: String, page: Int, size: Int): BlogConnection!
+    blogsByCategory(category: String!, page: Int, size: Int): BlogConnection!
+    blogsByTag(tag: String!, page: Int, size: Int): BlogConnection!
+    mostViewedBlogs(page: Int, size: Int): BlogConnection!
+    mostVotedBlogs(page: Int, size: Int): BlogConnection!
+
+    # Comment queries
+    commentById(id: ID!): Comment
+    rootCommentsByBlog(blogId: ID!, page: Int, size: Int): CommentConnection!
+    repliesByComment(commentId: ID!): [Comment!]!
+    commentsByUser(userId: ID!): [Comment!]!
+
+    # Progress queries
+    userProgressForCourse(userId: ID!, courseId: ID!): [UserProgress!]!
+    courseCompletionPercentage(userId: ID!, courseId: ID!): Float!
+    isLessonCompletedByUser(userId: ID!, lessonId: ID!): Boolean!
+
+    # Purchase queries
+    purchaseById(id: ID!): Purchase
+    purchasesByUser(userId: ID!): [Purchase!]!
+    purchasesByCourse(courseId: ID!): [Purchase!]!
+    hasPurchasedCourse(userId: ID!, courseId: ID!): Boolean!
+}
+
+type Mutation {
+    # User mutations
+    createUser(input: CreateUserInput!): User!
+    updateUser(id: ID!, input: UpdateUserInput!): User!
+    deleteUser(id: ID!): Boolean!
+
+    # Course mutations
+    createCourse(input: CreateCourseInput!): Course!
+    updateCourse(id: ID!, input: UpdateCourseInput!): Course!
+    deleteCourse(id: ID!): Boolean!
+    publishCourse(id: ID!): Boolean!
+    unpublishCourse(id: ID!): Boolean!
+
+    # Lesson mutations
+    createLesson(courseId: ID!, input: CreateLessonInput!): Lesson!
+    updateLesson(id: ID!, input: UpdateLessonInput!): Lesson!
+    deleteLesson(id: ID!): Boolean!
+    reorderLessons(courseId: ID!, orderedLessonIds: [ID!]!): Boolean!
+
+    # Blog mutations
+    createBlog(input: CreateBlogInput!): Blog!
+    updateBlog(id: ID!, input: UpdateBlogInput!): Blog!
+    deleteBlog(id: ID!): Boolean!
+    incrementBlogViews(id: ID!): Boolean!
+
+    # Comment mutations
+    createComment(blogId: ID!, content: String!, parentId: ID): Comment!
+    updateComment(id: ID!, content: String!): Comment!
+    deleteComment(id: ID!): Boolean!
+
+    # Vote mutations
+    voteOnBlog(blogId: ID!, voteType: VoteType!): Boolean!
+    removeVote(blogId: ID!): Boolean!
+
+    # Progress mutations
+    startLesson(userId: ID!, lessonId: ID!): UserProgress!
+    completeLesson(userId: ID!, lessonId: ID!): UserProgress!
+
+    # Purchase mutations
+    createPurchase(userId: ID!, courseId: ID!, paymentMethod: String!): Purchase!
+    verifyPurchase(purchaseId: ID!, verifierId: ID!): Boolean!
+
+    # Phone verification mutations
+    requestPhoneVerification(userId: ID!, phoneNumber: String!): PhoneVerification!
+    completePhoneVerification(verificationId: ID!): PhoneVerification!
+    failPhoneVerification(verificationId: ID!, reason: String): PhoneVerification!
+}
+
+# Types based on database schema
+type User {
+    id: ID!
+    email: String!
+    fullName: String
+    role: UserRole!
+    phoneVerified: Boolean!
+    createdAt: DateTime!
+    courses: [Course!]!
+    purchases: [Purchase!]!
+    comments: [Comment!]!
+}
+
+enum UserRole {
+    USER
+    OWNER
+}
+
+type Course {
+    id: ID!
+    title: String!
+    description: String
+    thumbnailUrl: String
+    price: Int!
+    createdBy: User!
+    published: Boolean!
+    createdAt: DateTime!
+    lessons: [Lesson!]!
+    purchaseCount: Int!
+    totalDuration: Int!
+}
+
+type CourseConnection {
+    edges: [CourseEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type CourseEdge {
+    node: Course!
+    cursor: String!
+}
+
+type Lesson {
+    id: ID!
+    course: Course!
+    title: String!
+    content: String
+    order: Int
+    duration: Int
+    progress(userId: ID!): UserProgress
+}
+
+type Blog {
+    id: ID!
+    title: String!
+    slug: String!
+    content: String
+    excerpt: String
+    featuredImage: String
+    category: String
+    tags: [String!]
+    status: BlogStatus!
+    createdBy: User!
+    createdAt: DateTime!
+    updatedAt: DateTime
+    views: Int!
+    votes: Int!
+    comments: [Comment!]!
+    commentCount: Int!
+}
+
+enum BlogStatus {
+    draft
+    published
+}
+
+type BlogConnection {
+    edges: [BlogEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type BlogEdge {
+    node: Blog!
+    cursor: String!
+}
+
+type Comment {
+    id: ID!
+    blog: Blog!
+    user: User!
+    parent: Comment
+    content: String!
+    createdAt: DateTime!
+    replies: [Comment!]!
+}
+
+type CommentConnection {
+    edges: [CommentEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type CommentEdge {
+    node: Comment!
+    cursor: String!
+}
+
+enum VoteType {
+    UP
+    DOWN
+}
+
+type UserProgress {
+    id: ID!
+    user: User!
+    lesson: Lesson!
+    status: ProgressStatus!
+    startedAt: DateTime
+    completedAt: DateTime
+}
+
+enum ProgressStatus {
+    NOT_STARTED
+    IN_PROGRESS
+    COMPLETED
+}
+
+type Purchase {
+    id: ID!
+    user: User!
+    course: Course!
+    paymentMethod: String
+    paymentVerified: Boolean!
+    verifiedBy: User
+    createdAt: DateTime!
+}
+
+type PhoneVerification {
+    id: ID!
+    user: User!
+    phoneNumber: String!
+    zaloStatus: ZaloStatus!
+    requestedAt: DateTime!
+    verifiedAt: DateTime
+}
+
+enum ZaloStatus {
+    PENDING
+    VERIFIED
+    FAILED
+}
+
+# Common types
+type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
+}
+
+# Scalar for DateTime
+scalar DateTime
+
+# Input types
+input CreateUserInput {
+    email: String!
+    fullName: String
+    role: UserRole
+}
+
+input UpdateUserInput {
+    email: String
+    fullName: String
+    role: UserRole
+}
+
+input CreateCourseInput {
+    title: String!
+    description: String
+    thumbnailUrl: String
+    price: Int!
+}
+
+input UpdateCourseInput {
+    title: String
+    description: String
+    thumbnailUrl: String
+    price: Int
+}
+
+input CreateLessonInput {
+    title: String!
+    content: String
+    order: Int
+    duration: Int
+}
+
+input UpdateLessonInput {
+    title: String
+    content: String
+    order: Int
+    duration: Int
+}
+
+input CreateBlogInput {
+    title: String!
+    slug: String
+    content: String
+    excerpt: String
+    featuredImage: String
+    category: String
+    tags: [String!]
+    status: BlogStatus
+}
+
+input UpdateBlogInput {
+    title: String
+    slug: String
+    content: String
+    excerpt: String
+    featuredImage: String
+    category: String
+    tags: [String!]
+    status: BlogStatus
+}
