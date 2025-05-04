@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "keycloak.authorization-grant-type",
+      "type": "java.lang.String",
+      "description": "Description for keycloak.authorization-grant-type."
+  }
+] }

@@ -29,6 +29,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.keycloak:keycloak-core:26.2.0'
 	implementation 'com.graphql-java:graphql-java-extended-scalars:22.0'
 	compileOnly 'org.projectlombok:lombok'
